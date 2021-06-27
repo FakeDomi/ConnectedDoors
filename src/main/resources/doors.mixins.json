@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "re.domi.doors.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "DoorBlockMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

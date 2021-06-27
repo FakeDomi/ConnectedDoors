@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "connected-doors",
+  "version": "${version}",
+
+  "name": "Connected Doors",
+  "description": "Allows double doors to open or close together.",
+  "authors": [
+    "Domi"
+  ],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/connected-doors",
+    "sources": "https://github.com/FakeDomi/ConnectedDoors",
+    "issues": "https://github.com/FakeDomi/ConnectedDoors/issues"
+  },
+
+  "license": "MIT",
+  "icon": "assets/connected-doors/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "re.domi.doors.ConnectedDoors"
+    ],
+    "client": [
+      "re.domi.doors.ConnectedDoorsClient"
+    ]
+  },
+  "mixins": [
+    "doors.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": "*",
+    "fabric": "*",
+    "minecraft": ">=1.17",
+    "java": ">=16"
+  }
+}
