@@ -9,7 +9,7 @@
     "Domi"
   ],
   "contact": {
-    "homepage": "https://www.curseforge.com/minecraft/mc-mods/connected-doors",
+    "homepage": "https://domi.re/mc-mods/doors",
     "sources": "https://github.com/FakeDomi/ConnectedDoors",
     "issues": "https://github.com/FakeDomi/ConnectedDoors/issues"
   },
@@ -33,7 +33,6 @@
   "depends": {
     "fabricloader": "*",
     "fabric": "*",
-    "minecraft": ">=1.18",
-    "java": ">=17"
+    "minecraft": ">=1.19"
   }
 }

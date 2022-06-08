@@ -8,6 +8,7 @@ import net.minecraft.block.DoorBlock;
 import net.minecraft.block.enums.DoorHinge;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
@@ -16,6 +17,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,7 +49,10 @@ public class DoorBlockMixin extends Block
 
             if (!ConnectedDoors.modPresent)
             {
-                sendUsePacket(hand, hit, neighborPos);
+                Vec3d adjustedHitPos = hit.getPos().add(neighborPos.getX() - pos.getX(), neighborPos.getY() - pos.getY(), neighborPos.getZ() - pos.getZ());
+                BlockHitResult neighborHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), neighborPos, hit.isInsideBlock());
+
+                sendUsePacket(world, hand, neighborHitResult, neighborPos);
             }
 
             return true;
@@ -99,10 +104,10 @@ public class DoorBlockMixin extends Block
 
     @Unique
     @Environment(EnvType.CLIENT)
-    private static void sendUsePacket(Hand hand, BlockHitResult hit, BlockPos pos)
+    private static void sendUsePacket(World world, Hand hand, BlockHitResult hit, BlockPos pos)
     {
         //noinspection ConstantConditions
-        MinecraftClient.getInstance().getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(hand, new BlockHitResult(hit.getPos(), hit.getSide(), pos, hit.isInsideBlock())));
+        ((ClientPlayerInteractionManagerMixin)MinecraftClient.getInstance().interactionManager).callSendSequencedPacket((ClientWorld)world, i -> new PlayerInteractBlockC2SPacket(hand, new BlockHitResult(hit.getPos(), hit.getSide(), pos, hit.isInsideBlock()), i));
     }
 
     private interface ForConnectedDoorFunc
