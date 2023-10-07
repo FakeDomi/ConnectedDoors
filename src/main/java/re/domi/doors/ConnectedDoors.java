@@ -8,7 +8,7 @@ public class ConnectedDoors implements ModInitializer
 {
     public static final Identifier PACKET_ID = new Identifier("connected-doors", "hello");
 
-    public static boolean modPresent = true;
+    public static boolean serverModPresent = true;
 
     @Override
     public void onInitialize()
