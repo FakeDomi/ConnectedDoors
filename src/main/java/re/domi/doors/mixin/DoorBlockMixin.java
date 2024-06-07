@@ -38,7 +38,7 @@ public class DoorBlockMixin extends Block
     }
 
     @Inject(method = "onUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;cycle(Lnet/minecraft/state/property/Property;)Ljava/lang/Object;"))
-    public void activateConnectedDoor(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
+    public void activateConnectedDoor(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
     {
         if (!Config.connectDoors
             || player.isSneaking()
@@ -56,7 +56,7 @@ public class DoorBlockMixin extends Block
                 Vec3d adjustedHitPos = hit.getPos().add(neighborPos.getX() - pos.getX(), neighborPos.getY() - pos.getY(), neighborPos.getZ() - pos.getZ());
                 BlockHitResult neighborHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), neighborPos, hit.isInsideBlock());
 
-                ConnectedDoorsClient.sendUsePacket(world, hand, neighborHitResult);
+                ConnectedDoorsClient.sendUsePacket(world, player.getActiveHand(), neighborHitResult);
             }
 
             return true;

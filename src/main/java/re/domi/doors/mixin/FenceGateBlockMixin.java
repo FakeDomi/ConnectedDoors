@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 public class FenceGateBlockMixin
 {
     @Inject(method = "onUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
-    private void activateConnectedFenceGates(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
+    private void activateConnectedFenceGates(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
     {
         if (!Config.connectFenceGates
             || player.isSneaking()
@@ -56,7 +56,7 @@ public class FenceGateBlockMixin
                     Vec3d adjustedHitPos = hit.getPos().add(blockPos.getX() - pos.getX(), blockPos.getY() - pos.getY(), blockPos.getZ() - pos.getZ());
                     BlockHitResult adjustedHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), blockPos, hit.isInsideBlock());
 
-                    ConnectedDoorsClient.sendUsePacket(world, hand, adjustedHitResult);
+                    ConnectedDoorsClient.sendUsePacket(world, player.getActiveHand(), adjustedHitResult);
                 }
                 else
                 {
