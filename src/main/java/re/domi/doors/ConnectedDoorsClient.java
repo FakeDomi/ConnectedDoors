@@ -47,7 +47,7 @@ public class ConnectedDoorsClient implements ClientModInitializer
 
     private static boolean hasBlacklistMatch(String blacklist, String toMatch)
     {
-        if (blacklist.length() == 0) return false;
+        if (blacklist.isEmpty()) return false;
 
         for (String entry : blacklist.split(";"))
         {
