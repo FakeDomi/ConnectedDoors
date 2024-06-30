@@ -1,4 +1,4 @@
-package re.domi.doors;
+package re.domi.doors.config;
 
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -12,6 +12,7 @@ public class Config
 {
     private static final File CONFIG_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "connected-doors.properties");
     private static final String CONFIG_COMMENT = "Connected Doors config file";
+
     private static final String SERVER_IP_BLACKLIST = "serverIpBlacklist";
     private static final String SERVER_NAME_BLACKLIST = "serverNameBlacklist";
     private static final String CONNECT_DOORS = "connectDoors";
@@ -24,7 +25,7 @@ public class Config
     public static boolean connectFenceGates = true;
     public static int connectedFenceGateLimit = 64;
 
-    static void read()
+    public static void read()
     {
         try
         {
@@ -51,7 +52,7 @@ public class Config
         }
     }
 
-    static void write()
+    private static void write()
     {
         try
         {

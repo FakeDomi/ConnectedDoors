@@ -22,9 +22,10 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import re.domi.doors.Config;
+import re.domi.doors.config.Config;
 import re.domi.doors.ConnectedDoors;
 import re.domi.doors.ConnectedDoorsClient;
+import re.domi.doors.config.EffectiveConfig;
 
 import static net.minecraft.block.DoorBlock.*;
 
@@ -39,9 +40,7 @@ public class DoorBlockMixin extends Block
     @Inject(method = "onUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;cycle(Lnet/minecraft/state/property/Property;)Ljava/lang/Object;"))
     public void activateConnectedDoor(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
     {
-        if (!Config.connectDoors
-            || player.isSneaking()
-            || world.isClient() && ConnectedDoorsClient.serverBlacklisted)
+        if (!EffectiveConfig.connectDoors || player.isSneaking())
         {
             return;
         }
@@ -50,7 +49,7 @@ public class DoorBlockMixin extends Block
         {
             world.setBlockState(neighborPos, neighborState.with(OPEN, !open), Block.NOTIFY_LISTENERS | Block.REDRAW_ON_MAIN_THREAD);
 
-            if (!ConnectedDoors.serverModPresent)
+            if (!EffectiveConfig.serverModPresent)
             {
                 Vec3d adjustedHitPos = hit.getPos().add(neighborPos.getX() - pos.getX(), neighborPos.getY() - pos.getY(), neighborPos.getZ() - pos.getZ());
                 BlockHitResult neighborHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), neighborPos, hit.isInsideBlock());
@@ -65,7 +64,7 @@ public class DoorBlockMixin extends Block
     @Inject(method = "neighborUpdate", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify, CallbackInfo ci, boolean receivingPower)
     {
-        if (Config.connectDoors && !world.isClient())
+        if (EffectiveConfig.connectDoors && !world.isClient())
         {
             this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
                 world.setBlockState(neighborPos, neighborState.with(OPEN, receivingPower).with(POWERED, receivingPower), Block.NOTIFY_LISTENERS));
@@ -75,7 +74,7 @@ public class DoorBlockMixin extends Block
     @ModifyVariable(method = "neighborUpdate", ordinal = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/block/DoorBlock;getDefaultState()Lnet/minecraft/block/BlockState;"))
     public boolean neighborUpdateReceivingPower(boolean orig, BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify)
     {
-        if (!Config.connectDoors) return orig;
+        if (!EffectiveConfig.connectDoors) return orig;
 
         return orig || this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
             world.isReceivingRedstonePower(neighborPos) || world.isReceivingRedstonePower(neighborPos.offset(neighborState.get(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN)));
@@ -84,7 +83,7 @@ public class DoorBlockMixin extends Block
     @Inject(method = "setOpen", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     public void connectForVillagers(@Nullable Entity entity, World world, BlockState state, BlockPos pos, boolean newOpen, CallbackInfo ci)
     {
-        if (!Config.connectDoors) return;
+        if (!EffectiveConfig.connectDoors) return;
 
         this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
             world.setBlockState(neighborPos, neighborState.with(OPEN, newOpen), NOTIFY_LISTENERS));

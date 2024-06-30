@@ -19,9 +19,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import re.domi.doors.BlockPosFloodFillIterator;
-import re.domi.doors.Config;
+import re.domi.doors.config.Config;
 import re.domi.doors.ConnectedDoors;
 import re.domi.doors.ConnectedDoorsClient;
+import re.domi.doors.config.EffectiveConfig;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -32,9 +33,7 @@ public class FenceGateBlockMixin
     @Inject(method = "onUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     private void activateConnectedFenceGates(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir)
     {
-        if (!Config.connectFenceGates
-            || player.isSneaking()
-            || world.isClient() && ConnectedDoorsClient.serverBlacklisted)
+        if (!EffectiveConfig.connectFenceGates || player.isSneaking())
         {
             return;
         }
@@ -44,13 +43,13 @@ public class FenceGateBlockMixin
         Direction.Axis axis = facing.getAxis();
         Block block = state.getBlock();
 
-        new BlockPosFloodFillIterator().iterate(pos, Config.connectedFenceGateLimit, Config.connectedFenceGateLimit, new Queuer(axis), (blockPos, o) ->
+        new BlockPosFloodFillIterator().iterate(pos, EffectiveConfig.connectedFenceGateLimit, EffectiveConfig.connectedFenceGateLimit, new Queuer(axis), (blockPos, o) ->
         {
             BlockState checkState = world.getBlockState(blockPos);
 
             if (checkState.isOf(block) && checkState.get(HorizontalFacingBlock.FACING).getAxis() == axis && checkState.get(Properties.OPEN) != open)
             {
-                if (!ConnectedDoors.serverModPresent)
+                if (!EffectiveConfig.serverModPresent)
                 {
                     Vec3d adjustedHitPos = hit.getPos().add(blockPos.getX() - pos.getX(), blockPos.getY() - pos.getY(), blockPos.getZ() - pos.getZ());
                     BlockHitResult adjustedHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), blockPos, hit.isInsideBlock());
@@ -72,7 +71,7 @@ public class FenceGateBlockMixin
     @Inject(method = "neighborUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"), cancellable = true)
     private void redstoneUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify, CallbackInfo ci)
     {
-        if (!Config.connectFenceGates) return;
+        if (!EffectiveConfig.connectFenceGates) return;
 
         boolean isPowered = world.isReceivingRedstonePower(pos);
         boolean open = state.get(Properties.OPEN);
@@ -84,7 +83,7 @@ public class FenceGateBlockMixin
         Block block = state.getBlock();
         BlockPosFloodFillIterator iterator = new BlockPosFloodFillIterator();
 
-        boolean isAnyConnectedBlockPowered = iterator.iterate(pos, Config.connectedFenceGateLimit, Config.connectedFenceGateLimit, new Queuer(axis), (blockPos, isAnyPowered) ->
+        boolean isAnyConnectedBlockPowered = iterator.iterate(pos, EffectiveConfig.connectedFenceGateLimit, EffectiveConfig.connectedFenceGateLimit, new Queuer(axis), (blockPos, isAnyPowered) ->
         {
             BlockState checkState = world.getBlockState(blockPos);
 
@@ -116,7 +115,7 @@ public class FenceGateBlockMixin
         }
     }
 
-    @SuppressWarnings("MixinInnerClass")
+    @SuppressWarnings({ "MixinInnerClass", "ClassCanBeRecord" })
     private static class Queuer implements BiConsumer<BlockPos, Consumer<BlockPos>>
     {
         private final Direction.Axis axis;

@@ -3,8 +3,9 @@ package re.domi.doors;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.world.ClientWorld;
@@ -12,28 +13,36 @@ import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.world.World;
+import re.domi.doors.config.Config;
+import re.domi.doors.config.ConfigurationPacket;
+import re.domi.doors.config.EffectiveConfig;
 import re.domi.doors.mixin.ClientPlayerInteractionManagerMixin;
 
 public class ConnectedDoorsClient implements ClientModInitializer
 {
-    public static boolean serverBlacklisted = false;
-
     @Override
     public void onInitializeClient()
     {
-        Config.read();
+        ClientConfigurationConnectionEvents.INIT.register((handler, client) ->
+            ConnectedDoors.resetEffectiveConfig(false));
 
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+        ClientConfigurationNetworking.registerGlobalReceiver(ConfigurationPacket.ID, (payload, context) ->
         {
-            ConnectedDoors.serverModPresent = ClientPlayNetworking.canSend(ConnectedDoors.PACKET_ID);
-            ConnectedDoorsClient.serverBlacklisted = false;
+            EffectiveConfig.serverModPresent = true;
+            EffectiveConfig.connectDoors = payload.connectDoors();
+            EffectiveConfig.connectFenceGates = payload.connectFenceGates();
+            EffectiveConfig.connectedFenceGateLimit = payload.connectedFenceGateLimit();
+        });
 
+        ClientPlayConnectionEvents.INIT.register((handler, client) ->
+        {
             ServerInfo serverInfo = handler.getServerInfo();
 
             if (serverInfo != null &&
                 (hasBlacklistMatch(Config.serverIpBlacklist, serverInfo.address) || hasBlacklistMatch(Config.serverNameBlacklist, serverInfo.name)))
             {
-                ConnectedDoorsClient.serverBlacklisted = true;
+                EffectiveConfig.connectDoors = false;
+                EffectiveConfig.connectFenceGates = false;
             }
         });
     }
