@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.block.WireOrientation;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -62,17 +63,17 @@ public class DoorBlockMixin extends Block
     }
 
     @Inject(method = "neighborUpdate", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
-    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify, CallbackInfo ci, boolean receivingPower)
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, WireOrientation wireOrientation, boolean notify, CallbackInfo ci, boolean bl)
     {
         if (EffectiveConfig.connectDoors && !world.isClient())
         {
             this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
-                world.setBlockState(neighborPos, neighborState.with(OPEN, receivingPower).with(POWERED, receivingPower), Block.NOTIFY_LISTENERS));
+                world.setBlockState(neighborPos, neighborState.with(OPEN, world.isReceivingRedstonePower(pos)).with(POWERED, world.isReceivingRedstonePower(pos)), Block.NOTIFY_LISTENERS));
         }
     }
 
     @ModifyVariable(method = "neighborUpdate", ordinal = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/block/DoorBlock;getDefaultState()Lnet/minecraft/block/BlockState;"))
-    public boolean neighborUpdateReceivingPower(boolean orig, BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify)
+    public boolean neighborUpdateReceivingPower(boolean orig, BlockState state, World world, BlockPos pos, Block sourceBlock, WireOrientation wireOrientation, boolean notify)
     {
         if (!EffectiveConfig.connectDoors) return orig;
 
