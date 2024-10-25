@@ -20,8 +20,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import re.domi.doors.BlockPosFloodFillIterator;
-import re.domi.doors.config.Config;
-import re.domi.doors.ConnectedDoors;
 import re.domi.doors.ConnectedDoorsClient;
 import re.domi.doors.config.EffectiveConfig;
 

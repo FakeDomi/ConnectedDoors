@@ -1,6 +1,7 @@
 package re.domi.doors.config;
 
 import net.fabricmc.loader.api.FabricLoader;
+import re.domi.doors.ConnectedDoors;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,7 +49,7 @@ public class Config
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            ConnectedDoors.LOGGER.error("Cannot read configuration file:", e);
         }
     }
 
@@ -68,7 +69,7 @@ public class Config
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            ConnectedDoors.LOGGER.error("Cannot write configuration file:", e);
         }
     }
 }

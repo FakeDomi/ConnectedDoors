@@ -22,9 +22,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import re.domi.doors.config.Config;
-import re.domi.doors.ConnectedDoors;
 import re.domi.doors.ConnectedDoorsClient;
 import re.domi.doors.config.EffectiveConfig;
 
@@ -46,14 +43,14 @@ public class DoorBlockMixin extends Block
             return;
         }
 
-        this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
+        this.forConnectedDoor(state, world, pos, (connectedDoorPos, connectedDoorState, isOriginOpen) ->
         {
-            world.setBlockState(neighborPos, neighborState.with(OPEN, !open), Block.NOTIFY_LISTENERS | Block.REDRAW_ON_MAIN_THREAD);
+            world.setBlockState(connectedDoorPos, connectedDoorState.with(OPEN, !isOriginOpen), Block.NOTIFY_LISTENERS | Block.REDRAW_ON_MAIN_THREAD);
 
             if (!EffectiveConfig.serverModPresent)
             {
-                Vec3d adjustedHitPos = hit.getPos().add(neighborPos.getX() - pos.getX(), neighborPos.getY() - pos.getY(), neighborPos.getZ() - pos.getZ());
-                BlockHitResult neighborHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), neighborPos, hit.isInsideBlock());
+                Vec3d adjustedHitPos = hit.getPos().add(connectedDoorPos.getX() - pos.getX(), connectedDoorPos.getY() - pos.getY(), connectedDoorPos.getZ() - pos.getZ());
+                BlockHitResult neighborHitResult = new BlockHitResult(adjustedHitPos, hit.getSide(), connectedDoorPos, hit.isInsideBlock());
 
                 ConnectedDoorsClient.sendUsePacket(world, player.getActiveHand(), neighborHitResult);
             }
@@ -62,13 +59,16 @@ public class DoorBlockMixin extends Block
         });
     }
 
-    @Inject(method = "neighborUpdate", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
-    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, WireOrientation wireOrientation, boolean notify, CallbackInfo ci, boolean bl)
+    @Inject(method = "neighborUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, WireOrientation wireOrientation, boolean notify, CallbackInfo ci)
     {
         if (EffectiveConfig.connectDoors && !world.isClient())
         {
-            this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
-                world.setBlockState(neighborPos, neighborState.with(OPEN, world.isReceivingRedstonePower(pos)).with(POWERED, world.isReceivingRedstonePower(pos)), Block.NOTIFY_LISTENERS));
+            this.forConnectedDoor(state, world, pos, (connectedDoorPos, connectedDoorState, isOriginOpen) ->
+            {
+                boolean receivingPower = world.isReceivingRedstonePower(pos);
+                return world.setBlockState(connectedDoorPos, connectedDoorState.with(OPEN, receivingPower).with(POWERED, receivingPower), Block.NOTIFY_LISTENERS);
+            });
         }
     }
 
@@ -77,8 +77,8 @@ public class DoorBlockMixin extends Block
     {
         if (!EffectiveConfig.connectDoors) return orig;
 
-        return orig || this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
-            world.isReceivingRedstonePower(neighborPos) || world.isReceivingRedstonePower(neighborPos.offset(neighborState.get(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN)));
+        return orig || this.forConnectedDoor(state, world, pos, (connectedDoorPos, connectedDoorState, isOriginOpen) ->
+            world.isReceivingRedstonePower(connectedDoorPos) || world.isReceivingRedstonePower(connectedDoorPos.offset(connectedDoorState.get(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN)));
     }
 
     @Inject(method = "setOpen", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
@@ -86,8 +86,8 @@ public class DoorBlockMixin extends Block
     {
         if (!EffectiveConfig.connectDoors) return;
 
-        this.forConnectedDoor(state, world, pos, (neighborPos, neighborState, open) ->
-            world.setBlockState(neighborPos, neighborState.with(OPEN, newOpen), NOTIFY_LISTENERS));
+        this.forConnectedDoor(state, world, pos, (connectedDoorPos, connectedDoorState, isOriginOpen) ->
+            world.setBlockState(connectedDoorPos, connectedDoorState.with(OPEN, newOpen), NOTIFY_LISTENERS));
     }
 
     @Unique
@@ -115,6 +115,16 @@ public class DoorBlockMixin extends Block
     @SuppressWarnings("MixinInnerClass")
     private interface ForConnectedDoorFunc
     {
-        boolean invoke(BlockPos neighborPos, BlockState neighborState, boolean open);
+        /**
+         * Callback that is run for a connected door half, if present.
+         * Top and bottom half blocks will call this separately.
+         *
+         * @param connectedDoorPos   the {@link BlockPos} of the connected door half
+         * @param connectedDoorState the {@link BlockState} of the connected door half
+         * @param isOriginOpen       whether the origin door block is open
+         *
+         * @return a boolean value to be passed through the {@link DoorBlockMixin#forConnectedDoor} call
+         */
+        boolean invoke(BlockPos connectedDoorPos, BlockState connectedDoorState, boolean isOriginOpen);
     }
 }

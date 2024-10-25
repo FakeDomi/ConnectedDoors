@@ -51,7 +51,7 @@ public class ConnectedDoorsClient implements ClientModInitializer
     public static void sendUsePacket(World world, Hand hand, BlockHitResult hit)
     {
         //noinspection ConstantConditions
-        ((ClientPlayerInteractionManagerMixin)MinecraftClient.getInstance().interactionManager).callSendSequencedPacket((ClientWorld)world, i -> new PlayerInteractBlockC2SPacket(hand, hit, i));
+        ((ClientPlayerInteractionManagerMixin) MinecraftClient.getInstance().interactionManager).callSendSequencedPacket((ClientWorld) world, i -> new PlayerInteractBlockC2SPacket(hand, hit, i));
     }
 
     private static boolean hasBlacklistMatch(String blacklist, String toMatch)

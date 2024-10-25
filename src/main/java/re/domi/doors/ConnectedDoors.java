@@ -4,12 +4,16 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import re.domi.doors.config.Config;
 import re.domi.doors.config.ConfigurationPacket;
 import re.domi.doors.config.EffectiveConfig;
 
 public class ConnectedDoors implements ModInitializer
 {
+    public static final Logger LOGGER = LoggerFactory.getLogger("connected-doors");
+
     @Override
     public void onInitialize()
     {
